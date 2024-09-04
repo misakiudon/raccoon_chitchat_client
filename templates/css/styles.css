@@ -14,33 +14,34 @@ body {
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    padding: 10px;
 }
 
 .chat-box {
-    height: 400px;
-    padding: 20px;
+    height: 300px;
+    padding: 10px;
     overflow-y: auto;
     border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
 }
 
-input[type="text"] {
-    width: calc(100% - 60px);
+#user-input {
+    width: calc(100% - 70px);
     padding: 10px;
     border: none;
     border-radius: 5px;
     margin: 10px;
 }
 
-button {
+#send-button {
     padding: 10px;
     border: none;
     background-color: #007bff;
     color: white;
     border-radius: 5px;
     cursor: pointer;
-    margin-right: 10px;
 }
 
-button:hover {
+#send-button:hover {
     background-color: #0056b3;
 }
