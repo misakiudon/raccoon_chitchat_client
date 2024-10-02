@@ -3,22 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatGPT TTS Client</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Chat with AI</title>
     <script>
-        // Pass the Ngrok URL from Flask to JavaScript
-        const NGROK_URL = "{{ ngrok_url }}";
+        function setName() {
+            const name = document.getElementById('name').value;
+            fetch('/set_name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'name': name })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status').innerText = data.message;
+                document.getElementById('chat-section').style.display = 'block';  // Show chat after setting the name
+            });
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('chat-input').value;
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 'message': message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('likeability').innerText = 'Likeability: ' + data.likeability;
+                document.getElementById('mental').innerText = 'Mental: ' + data.mental;
+                document.getElementById('expression').innerText = 'Expression: ' + data.expression;
+                document.getElementById('thinking').innerText = 'Thinking: ' + data.thinking;
+                document.getElementById('location').innerText = 'Location: ' + data.location;
+                document.getElementById('response').innerText = 'AI: ' + data.dialogue;
+                document.getElementById('translated').innerText = 'Translated: ' + data.translated;
+                
+                if (data.audio) {
+                    const audioSrc = 'data:audio/wav;base64,' + data.audio;
+                    document.getElementById('audio-player').src = audioSrc;
+                    document.getElementById('audio-player').style.display = 'block';
+                    document.getElementById('audio-player').play();
+                } else if (data.error) {
+                    document.getElementById('error').innerText = data.error;
+                }
+
+                document.getElementById('chat-input').value = '';  // Clear input
+            });
+        }
     </script>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-box" id="chat-box">
-            <div id="conversation"></div> <!-- Container for displaying conversation -->
-        </div>
-        <input type="text" id="user-input" placeholder="ほしかわちゃんと話してみましょう！" autocomplete="off">
-        <button id="send-button">送信</button>
-        <audio id="audio" controls style="display:none;"></audio> <!-- Hidden audio element to play TTS -->
+    <h1>Chat with AI</h1>
+    
+    <!-- Section to set name -->
+    <div>
+        <input type="text" id="name" placeholder="Enter your name">
+        <button onclick="setName()">Set Name</button>
+        <p id="status"></p>
     </div>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script> <!-- Include JS -->
+
+    <!-- Section for chat -->
+    <div id="chat-section" style="display:none;">
+        <h3>Chat</h3>
+        <input type="text" id="chat-input" placeholder="Enter your message">
+        <button onclick="sendMessage()">Send</button>
+
+        <p id="likeability"></p>
+        <p id="mental"></p>
+        <p id="expression"></p>
+        <p id="thinking"></p>
+        <p id="location"></p>
+        <p id="response"></p>
+        <p id="translated"></p>
+        <p id="error" style="color: red;"></p>
+
+        <audio id="audio-player" style="display:none;" controls></audio>
+    </div>
 </body>
 </html>
