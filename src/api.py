@@ -3,7 +3,7 @@ from openai import OpenAI
 class GPT4OpenAI:
     def __init__(self):
         self.model = "gpt-4o"  # OpenAI model name
-        self.api_key = ""  # Replace with your actual OpenAI API key
+        self.api_key = ""  # Replace with your actual OpenAI APIkey
         self.client = OpenAI(api_key=self.api_key)
 
     def get_response(self, arg):
