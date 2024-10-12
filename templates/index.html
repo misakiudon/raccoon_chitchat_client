@@ -3,79 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with AI</title>
-    <script>
-        function setName() {
-            const name = document.getElementById('name').value;
-            fetch('/set_name', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ 'name': name })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('status').innerText = data.message;
-                document.getElementById('chat-section').style.display = 'block';  // Show chat after setting the name
-            });
+    <title>AI Chat Simulator with Quest System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
         }
-
-        function sendMessage() {
-            const message = document.getElementById('chat-input').value;
-            fetch('/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 'message': message })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('likeability').innerText = 'Likeability: ' + data.likeability;
-                document.getElementById('mental').innerText = 'Mental: ' + data.mental;
-                document.getElementById('expression').innerText = 'Expression: ' + data.expression;
-                document.getElementById('thinking').innerText = 'Thinking: ' + data.thinking;
-                document.getElementById('location').innerText = 'Location: ' + data.location;
-                document.getElementById('response').innerText = 'AI: ' + data.dialogue;
-                document.getElementById('translated').innerText = 'Translated: ' + data.translated;
-                
-                if (data.audio) {
-                    const audioSrc = 'data:audio/wav;base64,' + data.audio;
-                    document.getElementById('audio-player').src = audioSrc;
-                    document.getElementById('audio-player').style.display = 'block';
-                    document.getElementById('audio-player').play();
-                } else if (data.error) {
-                    document.getElementById('error').innerText = data.error;
-                }
-
-                document.getElementById('chat-input').value = '';  // Clear input
-            });
+        .chat-container {
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
         }
-    </script>
+        .countdown-board {
+            padding: 10px;
+            border-bottom: 1px solid #aaa;
+            background: #ffeb3b;
+            text-align: center;
+            font-weight: bold;
+        }
+        .quest-board {
+            padding: 10px;
+            border-bottom: 1px solid #aaa;
+            background: #e3f2fd;
+        }
+        .quest-board div {
+            margin-bottom: 5px;
+        }
+        .status-board {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            background: #f8f8f8;
+        }
+        .status-board div {
+            margin-bottom: 5px;
+        }
+        .chat-box {
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-container button {
+            margin-top: 5px;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .input-container button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .input-container button.ask-button {
+            background: #28a745; /* Different color for the ask button */
+        }
+    </style>
 </head>
 <body>
-    <h1>Chat with AI</h1>
-    
-    <!-- Section to set name -->
-    <div>
-        <input type="text" id="name" placeholder="Enter your name">
-        <button onclick="setName()">Set Name</button>
-        <p id="status"></p>
+    <div class="chat-container">
+        <!-- Countdown Board -->
+        <div class="countdown-board" id="countdown-board">
+            Remaining Conversations: 20
+        </div>
+
+        <!-- Quest Status Board -->
+        <div class="quest-board" id="quest-board">
+            <div><b>Make first conversation with Hoshikawa</b> <span id="quest-1">In Progress</span></div>
+            <div><b>Order melon soda</b> <span id="quest-2">In Progress</span></div>
+            <div><b>Ask Hoshikawa's memory about melon soda</b> <span id="quest-3">In Progress</span></div>
+            <div><b>Request live concert to Hoshikawa</b> <span id="quest-4">In Progress</span></div>
+            <div><b>Ask for payment</b> <span id="quest-5">In Progress</span></div>
+        </div>
+
+        <!-- Status Board for Character Parameters -->
+        <div class="status-board" id="status-board">
+            <div><b>Likeability:</b> <span id="likeability">0</span></div>
+            <div><b>Mental:</b> <span id="mental">100</span></div>
+            <div><b>Expression:</b> <span id="expression">Neutral</span></div>
+            <div><b>Thinking:</b> <span id="thinking">hello!</span></div>
+        </div>
+
+        <!-- Chat Box for Conversation -->
+        <div class="chat-box" id="chat-box">
+            <div>Welcome to the AI Chat Simulator</div>
+        </div>
+        
+        <!-- Input Container for User Input and Additional Button -->
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type a message..." onkeydown="checkEnter(event)">
+            <button id="send-button" onclick="sendMessage()">Send</button>
+            <button id="ask-button" class="ask-button" onclick="askSomething()">Idle</button>
+        </div>
     </div>
 
-    <!-- Section for chat -->
-    <div id="chat-section" style="display:none;">
-        <h3>Chat</h3>
-        <input type="text" id="chat-input" placeholder="Enter your message">
-        <button onclick="sendMessage()">Send</button>
+    <script>
+        let conversationCount = 20;  // Initial conversation count
 
-        <p id="likeability"></p>
-        <p id="mental"></p>
-        <p id="expression"></p>
-        <p id="thinking"></p>
-        <p id="location"></p>
-        <p id="response"></p>
-        <p id="translated"></p>
-        <p id="error" style="color: red;"></p>
+        // Function to handle Enter key press
+        function checkEnter(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
 
-        <audio id="audio-player" style="display:none;" controls></audio>
-    </div>
+        // Function to send a message to the backend
+        function sendMessage() {
+            if (conversationCount <= 0) return;
+
+            const userInput = document.getElementById('user-input').value;
+            if (userInput.trim() !== "") {
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML += `<div><b>You:</b> ${userInput}</div>`;
+
+                // Decrease conversation count by 1
+                updateCountdown(-1);
+
+                // Send the input to the server
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message: userInput })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayAIResponse(data);
+                });
+
+                document.getElementById('user-input').value = '';
+            }
+        }
+
+        // Function to ask the AI to say something to continue the conversation
+        function askSomething() {
+            if (conversationCount <= 0) return;
+
+            // Send a request to the server for the AI to ask something
+            fetch('/ask_something', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayAIResponse(data);
+                updateCountdown(-1);  // Decrease count by 1 for AI message
+            });
+        }
+
+        // Function to update the AI response and chat display
+        function displayAIResponse(data) {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div><b>AI:</b> ${data.response}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Update character parameters dynamically
+            updateStatusBoard(data.likeability, data.mental, data.expression, data.thinking);
+
+            // Update the quest status dynamically
+            updateQuestBoard(data.quests);
+        }
+
+        // Function to update the character status board with new values
+        function updateStatusBoard(likeabilityValue, mentalValue, expressionValue, thinkingValue) {
+            document.getElementById('likeability').innerText = likeabilityValue;
+            document.getElementById('mental').innerText = mentalValue;
+            document.getElementById('expression').innerText = expressionValue;
+            document.getElementById('thinking').innerText = thinkingValue;
+        }
+
+        // Function to update the quest status with new values
+        function updateQuestBoard(quests) {
+            document.getElementById('quest-1').innerText = quests['Make First Conversation with Hoshikawa  '];
+            document.getElementById('quest-2').innerText = quests["Order Melon Soda  "];
+            document.getElementById('quest-3').innerText = quests["Ask Hoshikawa’s Memory About Melon Soda  "];
+            document.getElementById('quest-4').innerText = quests["Request Live Concert from Hoshikawa  "];
+            document.getElementById('quest-5').innerText = quests['Ask for Payment  '];
+        }
+
+        // Function to update the countdown and disable input if count reaches zero
+        function updateCountdown(change) {
+            conversationCount += change;
+            document.getElementById('countdown-board').innerText = `Remaining Conversations: ${conversationCount}`;
+
+            if (conversationCount <= 0) {
+                document.getElementById('chat-box').innerHTML += `<div><b>AI:</b> 今日はありがとうございました！</div>`;
+                document.getElementById('user-input').disabled = true;
+                document.getElementById('send-button').disabled = true;
+                document.getElementById('ask-button').disabled = true;
+            }
+        }
+    </script>
 </body>
 </html>

@@ -4,7 +4,7 @@ import io
 import src.module as module
 
 # 서버 URL을 여기에 입력하세요 (Ngrok URL)
-TTS_SERVER_URL = ""  # 실제 Ngrok URL로 교체해야 합니다
+TTS_SERVER_URL = "https://a631-157-82-13-201.ngrok-free.app"  # 실제 Ngrok URL로 교체해야 합니다
 model_id = 0
 speaker_id = 0
 language = "JP"

@@ -1,3 +1,7 @@
+# *******************************
+# the code and ./src are deprecated
+# *******************************
+
 from flask import Flask, render_template, request, jsonify
 import base64
 from io import BytesIO
